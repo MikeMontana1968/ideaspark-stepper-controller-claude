@@ -1,0 +1,144 @@
+Prompt Document Version 1.0.2
+
+Construct a C++ project for the PlatformIO environment for the “Ideaspark  ESP32 0.96 led“ dev board.
+ Hardware:
+•	Ideaspark  ESP32 0.96 led
+•	NEO-6M GPS Module
+•	ULN2003 Driver Board
+Software Libraries:
+    mikalhart/TinyGPSPlus@^1.0.3
+    adafruit/Adafruit GFX Library@^1.11.9
+    adafruit/Adafruit SSD1306@^2.5.10
+    waspinator/AccelStepper@^1.64
+    bblanchon/ArduinoJson@^7.4.2
+    marscaper/Ephemeris@^1.0.1
+
+Overview:
+The application will be a stepper motor controller that will rotate the motor per user interaction. It will make use of GPS through the TinyGPS library to get the current time, and latitude. It will be configurable via user initiated activity over Bluetooth.
+Deliverables:
+Application source code in C++ written for the hardware described above.
+A pin-out diagram, in Fritzing format, of the hardware described above.
+
+Code Structure Requirements:
+1.	All CPP files shall have a matching .H header file.
+2.	All class files shall be created in the src/classes folder. 
+3.	The ephemeris related functions that use latitude, longitude, time and date to calculate elements shall be included in one class and utilize the marscaper/Ephemeris library.
+Code Requirements:
+1.	Each function and method shall have a Serial print statement with the name of the function being called. The call parameters shall be included in the string. For functions that are called many times per second, the print statement shall be commented out.
+2.	The Bluetooth code and Configuration shall be in their own classes.
+a.	All methods in any Bluetooth class shall be public.
+b.	All field members shall be public in these classes.
+3.	All If..then statements shall always have a block structure.
+4.	All return values shall have a Serial.println() to echo the value being returned.
+5.	Be sure to include the Arduino TimeLib.h and Time.h
+6.	
+Runtime Requirements:
+1.	Logging:	
+1.	The application will utilize standard ESP32 logging facilities. All INFO and ERROR level logs are appended to a log file that is stored in SPIFFS in a folder named “logs”. Each log file will be 1mb in length. When a log file reaches the 1mb size, a new log file is created. The log file name is a sequential number starting from 1000 and incrementing by 1. If there are more than 50 logs, the lowest sequential number log is to be deleted.
+2.	When starting up the application shall check for the logs folder to exist, and if it does not, the application will create the logs folder, and log an entry “Logs folder created”
+2.	Power Up/setup():
+1.	The system will initialize the serial port to 115200 baud.
+2.	Wait until the serial port is ready then configure all hardware as necessary. 
+3.	The application shall serial print “Starting…”, a trailing space, 
+4.	The application shall serial print the C++ build date and time
+5.	A newline character
+6.	The application shall echo the “Prompt Document Version” which is sourced from the top line of this document. It should be a compiled in version.
+7.	Configure, and maintain SPIFFS logging as necessary. It will log the startup event.
+8.	The SPIFFS structures shall be initialized as needed if they do not already exist.
+9.	The status of the SPIFFs structures shall be written as a Serial print.
+
+3.	Main Loop		
+1.1.	Poll the Bluetooth port for any user interaction (initiated by the user pressing ENTER). If there is a user, the app will be configured per Configuration Mode.
+1.2.	Update the stepper-motor position via microstepping.
+1.3.	Update the OLED’s status bar:
+1.3.1.	While the application is waiting for a GPS Fix, the "Status Bar" will display "Waiting for GPS, " and the system uptime in MM:SS format. It will update this display every 250 milliseconds until a full GPS fix is established.
+1.3.1.1.	If a GPS fix is not found in 600 seconds, the application will assume a default value of:
+1.3.1.1.1.	Time – the c++ build time.
+1.3.1.1.2.	A latitude of 40.5169° N
+1.3.1.1.3.	A longitude of 74.4063° W
+1.3.1.1.4.	An elevation of 0.
+1.3.2.	After a GPS fix is established, the current system time is set per the GPS time. The timezone must be set according to the Longitude of the GPS fix.
+1.3.3.	The application shall display on line one, in 9 point sans serif font:
+1.3.3.1.	The current time in HH:MM:SS format, a trailing space,
+1.3.3.2.	 The number of degrees rotated on the stepper motor, a trailing space,
+1.3.3.3.	The current Latitude in “DD MM” format, a comma,
+1.3.3.4.	The current Longitude in “DD MM” format, a trailing space,
+1.3.3.5.	The setting of the system time is to be logged.
+1.4.	Update the serial port:
+1.4.1.	Every five seconds a notification is sent over the standard Serial port. The content of this notification is the text of the status-bar text.
+1.5.	Update the system logs
+1.5.1.	Every 1 minute a log entry is created. The content of this notification is the status bar text and the activity-area text. 
+1.6.	Update the OLED’s activity area:
+1.6.1.	Display the text “Mode: “
+1.6.1.1.	Display the current revolution time period from the User-Configuration as “1m”, “1h”, “1d”, a trailing space,
+1.6.2.	Calculate the Sun rise and set time for the current location using the GPS fix. 
+1.6.2.1.	Display a “S: “
+1.6.2.2.	Display the rise time in 24hr format as “HH:MM”, 
+1.6.2.3.	Display a “ - “
+1.6.2.4.	Display the setting time in 24hr format as “HH:MM”
+1.6.2.5.	Display a trailing space
+1.6.2.6.	Calculate the compass heading for the sun’s setting time. Display it as an integer value with a degree symbol. 
+1.6.2.7.	And a trailing space.
+1.6.3.	Calculate the Moon rise and set time for the current location using the GPS fix. 
+1.6.3.1.	Display a “M: “
+1.6.3.2.	Display the rise time in 24hr format as “HH:MM”. 
+1.6.3.2.1.	If the moon rise is on a prior day, display it as “--:--“. 
+1.6.3.3.	Display a “ – “
+1.6.3.4.	Display the setting time in 24hr format as “HH:MM”.
+1.6.3.5.	Add a trailing space.
+1.6.3.6.	Using the “Moon Phases” font from ‘https://fontmeme.com/fonts/moon-phases-font/’, display the phase of the moon.
+1.6.3.7.	Add a trailing space
+1.6.3.8.	Calculate the compass heading for the moon’s setting time. Display it as an integer value with a degree symbol. And a trailing space.
+1.6.4.	If the current system is before the configuration’s “Start Time”, then display the duration until that time as “Begin in HH:MM”
+1.6.5.	Otherwise, display the amount of time remaining until the system time matches the configuration’s “stop rotating after X hours” limit.
+1.6.6.	If the configuration’s schedule is complete, display “completed”.
+Configuration Structure:
+1.	Rotation Speed – one of three possible choices
+1.1.	“Once per Minute” 
+1.2.	“Once per Hour”
+1.3.	“Once per Day”
+1.4.	If no value is set, the “Once per Day" will be the default.
+2.	Start Time
+2.1.	A string in a 24-hour format as “hh:mm”.
+2.2.	If no value is set, rotation begins immediately.
+3.	Duration of Rotation in hours. 
+3.1.	If Zero, the rotation will be continuous.
+4.	Rewind after rotation completed
+4.1.	A Yes/No value expressed as “Y” or “N”.
+4.2.	If no value expressed the default value shall be “N”
+
+The configuration shall be persisted to SPIFFS with a filename of “schedule.json”.
+
+If there is no default or valid configuration, a configuration shall be initialized per above, and the default configuration shall be persisted.
+User-Configuration Mode:
+1.	The app will poll for user interaction via bluetooth low energy using text prompts such that a user can configure the rate of rotation as: 
+1.1.	One revolution per minute,
+1.2.	One revolution per hour,
+1.3.	One revolution per day
+2.	The user can also specify an interval of when to schedule the rotation to begin at 24 hour HH:MM format, with a “Stop rotating after X hours”.
+3.	If there is no user interaction at the Bluetooth prompt, and no configuration has been 
+4.	Once the user completes the configuration, the configuration is to be:
+4.1.	Written to SPIFFs with a filename of “schedule.json”
+4.2.	Logged as an event.
+
+To initiate interaction, the user presses “Enter”.
+The system will retrieve the last 5 lines of the current log file and echo them to the Bluetooth serial port. And echo a blank line after.
+
+They will be prompted with:
+1.	Rotate the stepper 1 rotation per minute
+2.	Rotate the stepper 1 rotation per hour.
+3.	Rotate the stepper 1 rotation per day.
+4.	Custom configuration
+5.	display last log
+6.	Clear logs
+If they press "1" the application will continuously microstep the stepper motor at a rate of 1 full rotation per minute. This will be considered the "simple class".
+ 
+If they press "2" the application will continuously microstep the stepper motor at a rate of 1 full rotation per hour. This will be considered the "simple class".
+ 
+If they press "3" the application will continuously microstep the stepper motor at a rate of 1 full rotation per day. V
+ 
+If they press "4" the application will ask for "Start Time:" in HH:MM format, and ask for "End Time:" in HH:MM format. Next they will be prompted "At completion, rewind the motor?", this prompt will accept only Y or N. This will be considered the "custom class".
+
+If they press “5” the application will retrieve the current log file, and echo its contents to the Bluetooth port.
+
+If they press “6” the application will delete all log files in the “logs” folder, and create a new log file.
