@@ -10,6 +10,7 @@ public:
     bool userInteracting;
     String inputBuffer;
     int menuState;
+    bool isConnected;
     
     BluetoothManager();
     ~BluetoothManager();
@@ -22,6 +23,7 @@ public:
     void displayLastLog();
     void clearLogs();
     void sendLastLogLines();
+    
 
 private:
     void resetMenuState();

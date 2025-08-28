@@ -7,11 +7,16 @@ extern LogManager* logManager;
 extern ConfigurationManager* configManager;
 extern StepperController* stepperController;
 
+// Static instance pointer for callbacks
+BluetoothManager* bluetoothManagerInstance = nullptr;
+
 BluetoothManager::BluetoothManager() {
     Serial.println("BluetoothManager::BluetoothManager()");
     userInteracting = false;
     inputBuffer = "";
     menuState = 0;
+    isConnected = false;
+    bluetoothManagerInstance = this;
 }
 
 BluetoothManager::~BluetoothManager() {
@@ -20,16 +25,48 @@ BluetoothManager::~BluetoothManager() {
 
 void BluetoothManager::begin() {
     Serial.println("BluetoothManager::begin()");
-    btSerial.begin("ESP32_StepperController");
-    btSerial.println("Bluetooth initialized");
+    
+    // Small delay to let Bluetooth stack settle
+    delay(100);
+    
+    if(!btSerial.begin("ESP32_StepperController")) {
+        Serial.println("An error occurred initializing Bluetooth");
+        return;
+    }
+    
+    // Additional delay after initialization
+    delay(100);
+    Serial.println("Bluetooth initialized successfully");
 }
 
 void BluetoothManager::handleUserInteraction() {
-    // Serial.println("BluetoothManager::handleUserInteraction()"); // Commented out - called frequently
+    // Check connection status
+    bool currentlyConnected = btSerial.hasClient();
+    
+    // Handle connection state changes
+    if (currentlyConnected && !isConnected) {
+        // Just connected
+        Serial.println("Bluetooth client connected");
+        isConnected = true;
+        btSerial.println("Welcome to ESP32 Stepper Controller!");
+        btSerial.println("Press Enter to start interaction");
+    } else if (!currentlyConnected && isConnected) {
+        // Just disconnected
+        Serial.println("Bluetooth client disconnected");
+        isConnected = false;
+        userInteracting = false;
+        inputBuffer = "";
+        menuState = 0;
+    }
+    
+    // Only handle interaction if connected
+    if (!isConnected) {
+        return;
+    }
     
     if (btSerial.available()) {
         char c = btSerial.read();
-        
+        Serial.println("BluetoothManager::handleUserInteraction()"); // Commented out - called frequently
         if (c == '\r' || c == '\n') {
             if (!userInteracting && inputBuffer.length() == 0) {
                 // User pressed Enter to initiate interaction
@@ -194,3 +231,4 @@ String BluetoothManager::readInput() {
     // Serial.println(result);
     return result;
 }
+

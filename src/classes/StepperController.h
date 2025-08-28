@@ -23,6 +23,7 @@ public:
     void rewind();
     float getCurrentDegrees();
     bool isRotating();
+    void releaseCoils();
 
 private:
     AccelStepper* stepper;

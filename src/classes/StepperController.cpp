@@ -39,6 +39,9 @@ void StepperController::update() {
             currentSteps++;
             lastStepTime = currentTime;
             
+            // Release coils after step to prevent heating
+            releaseCoils();
+            
             // Reset step count after full revolution
             if (currentSteps >= stepsPerRevolution) {
                 Serial.println("StepperController::update() Completed 1 rotation");
@@ -64,6 +67,7 @@ void StepperController::startRotation() {
 void StepperController::stopRotation() {
     Serial.println("StepperController::stopRotation()");
     rotating = false;
+    releaseCoils();
 }
 
 void StepperController::rewind() {
@@ -108,4 +112,10 @@ void StepperController::calculateStepInterval() {
     }
     Serial.print("StepperController::calculateStepInterval() set to: ");
     Serial.println(stepInterval);
+}
+
+void StepperController::releaseCoils() {
+    if (stepper) {
+        stepper->disableOutputs();
+    }
 }

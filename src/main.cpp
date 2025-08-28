@@ -9,6 +9,7 @@
 #include "classes/ConfigurationManager.h"
 #include "classes/LogManager.h"
 #include "classes/EphemerisCalculator.h"
+#include "classes/VoltageMonitor.h"
 
 const String PROMPT_VERSION = "Prompt Document Version 1.0.2";
 
@@ -25,6 +26,7 @@ BluetoothManager* bluetoothManager;
 ConfigurationManager* configManager;
 LogManager* logManager;
 EphemerisCalculator* ephemerisCalc;
+VoltageMonitor* voltageMonitor;
 
 unsigned long lastStatusUpdate = 0;
 unsigned long lastSerialOutput = 0;
@@ -73,6 +75,9 @@ void setup() {
     bluetoothManager->begin();
     
     ephemerisCalc = new EphemerisCalculator();
+    
+    voltageMonitor = new VoltageMonitor();
+    voltageMonitor->begin();
     
     gpsStartTime = millis();
     
@@ -172,7 +177,10 @@ String buildActivityText() {
     int moonHeading = ephemerisCalc->getMoonSettingHeading(
         gpsManager->getLatitude(), gpsManager->getLongitude());
     
-    String result = "Mode: " + mode + " " + String(moonHeading) + "' ";
+    // Get voltage status
+    String voltage = voltageMonitor->getStatus();
+    
+    String result = "Mode: " + mode + " " + String(moonHeading) + "' " + voltage + " ";
     
     // Check if we're before start time or calculate remaining time
     if (configManager->isBeforeStartTime()) {
