@@ -17,26 +17,32 @@ int EphemerisCalculator::getMoonSettingHeading(float latitude, float longitude) 
     Serial.print(longitude);
     Serial.println(")");
     
-    float jd;
-    getCurrentJulianDate(jd);
-    Serial.println("EphemerisCalculator::getMoonSettingHeading() Not Implemented");
-    return 1.0;
+    // Set observer location
+    int latDeg = (int)latitude;
+    int latMin = (int)((latitude - latDeg) * 60);
+    float latSec = ((latitude - latDeg) * 60 - latMin) * 60;
+    int lonDeg = (int)longitude;
+    int lonMin = (int)((longitude - lonDeg) * 60);
+    float lonSec = ((longitude - lonDeg) * 60 - lonMin) * 60;
+    
+    Ephemeris::setLocationOnEarth(latDeg, latMin, latSec, lonDeg, lonMin, lonSec);
 
     // Get current moon position
-    // SolarSystemObject moon = ephemeris.moonPosition(jd);
+    SolarSystemObject moon = Ephemeris::solarSystemObjectAtDateAndTime(
+        EarthsMoon, day(), month(), year(), hour(), minute(), second());
     
-    // // Convert equatorial coordinates to horizontal coordinates
-    // HorizontalCoordinates moonHorizontal = ephemeris.equatorialToHorizontal(
-    //     moon.equatorialCoordinates, jd, latitude, longitude);
+    // Convert equatorial coordinates to horizontal coordinates
+    HorizontalCoordinates moonHorizontal = Ephemeris::equatorialToHorizontalCoordinatesAtDateAndTime(
+        moon.equaCoordinates, day(), month(), year(), hour(), minute(), second());
     
-    // // Return azimuth as integer (compass heading for setting)
-    // int result = (int)(moonHorizontal.azimuth + 0.5);
-    // if (result < 0) result += 360;
-    // if (result >= 360) result -= 360;
+    // Return azimuth as integer (compass heading for setting)
+    int result = (int)(moonHorizontal.azi + 0.5);
+    if (result < 0) result += 360;
+    if (result >= 360) result -= 360;
     
-    // Serial.print("EphemerisCalculator::getMoonSettingHeading() returning: ");
-    // Serial.println(result);
-    // return result;
+    Serial.print("EphemerisCalculator::getMoonSettingHeading() returning: ");
+    Serial.println(result);
+    return result;
 }
 
 float EphemerisCalculator::getMoonAzimuth(float latitude, float longitude) {
@@ -46,18 +52,25 @@ float EphemerisCalculator::getMoonAzimuth(float latitude, float longitude) {
     Serial.print(longitude);
     Serial.println(")");
     
-    float jd;
-    getCurrentJulianDate(jd);
-    Serial.println("EphemerisCalculator::getMoonAzimuth() Not Implemented");
-    return 1.0;
-    // SolarSystemObject moon = ephemeris.moonPosition(jd);
-    // HorizontalCoordinates moonHorizontal = ephemeris.equatorialToHorizontal(
-    //     moon.equatorialCoordinates, jd, latitude, longitude);
+    // Set observer location
+    int latDeg = (int)latitude;
+    int latMin = (int)((latitude - latDeg) * 60);
+    float latSec = ((latitude - latDeg) * 60 - latMin) * 60;
+    int lonDeg = (int)longitude;
+    int lonMin = (int)((longitude - lonDeg) * 60);
+    float lonSec = ((longitude - lonDeg) * 60 - lonMin) * 60;
     
-    // float result = moonHorizontal.azimuth;
-    // Serial.print("EphemerisCalculator::getMoonAzimuth() returning: ");
-    // Serial.println(result);
-    // return result;
+    Ephemeris::setLocationOnEarth(latDeg, latMin, latSec, lonDeg, lonMin, lonSec);
+    
+    SolarSystemObject moon = Ephemeris::solarSystemObjectAtDateAndTime(
+        EarthsMoon, day(), month(), year(), hour(), minute(), second());
+    HorizontalCoordinates moonHorizontal = Ephemeris::equatorialToHorizontalCoordinatesAtDateAndTime(
+        moon.equaCoordinates, day(), month(), year(), hour(), minute(), second());
+    
+    float result = moonHorizontal.azi;
+    Serial.print("EphemerisCalculator::getMoonAzimuth() returning: ");
+    Serial.println(result);
+    return result;
 }
 
 float EphemerisCalculator::getMoonElevation(float latitude, float longitude) {
@@ -67,18 +80,25 @@ float EphemerisCalculator::getMoonElevation(float latitude, float longitude) {
     Serial.print(longitude);
     Serial.println(")");
     
-    float jd;
-    getCurrentJulianDate(jd);
-    Serial.println("EphemerisCalculator::getMoonElevation() Not Implemented");
-    return 1.0;
-    // SolarSystemObject moon = ephemeris.moonPosition(jd);
-    // HorizontalCoordinates moonHorizontal = ephemeris.equatorialToHorizontal(
-    //     moon.equatorialCoordinates, jd, latitude, longitude);
+    // Set observer location
+    int latDeg = (int)latitude;
+    int latMin = (int)((latitude - latDeg) * 60);
+    float latSec = ((latitude - latDeg) * 60 - latMin) * 60;
+    int lonDeg = (int)longitude;
+    int lonMin = (int)((longitude - lonDeg) * 60);
+    float lonSec = ((longitude - lonDeg) * 60 - lonMin) * 60;
     
-    // float result = moonHorizontal.elevation;
+    Ephemeris::setLocationOnEarth(latDeg, latMin, latSec, lonDeg, lonMin, lonSec);
+    
+    SolarSystemObject moon = Ephemeris::solarSystemObjectAtDateAndTime(
+        EarthsMoon, day(), month(), year(), hour(), minute(), second());
+    HorizontalCoordinates moonHorizontal = Ephemeris::equatorialToHorizontalCoordinatesAtDateAndTime(
+        moon.equaCoordinates, day(), month(), year(), hour(), minute(), second());
+    
+    float result = moonHorizontal.alt;
     Serial.print("EphemerisCalculator::getMoonElevation() returning: ");
-    //Serial.println(result);
-    //return result;
+    Serial.println(result);
+    return result;
 }
 
 float EphemerisCalculator::calculateBearing(float lat1, float lon1, float lat2, float lon2) {
@@ -107,29 +127,3 @@ float EphemerisCalculator::calculateBearing(float lat1, float lon1, float lat2, 
     return bearing;
 }
 
-void EphemerisCalculator::getCurrentJulianDate(float& jd) {
-    Serial.println("EphemerisCalculator::getCurrentJulianDate()");
-    
-    // Convert current time to Julian Date
-    int y = year();
-    int m = month();
-    int d = day();
-    int h = hour();
-    int min = minute();
-    int s = second();
-    
-    // Julian Date calculation
-    if (m <= 2) {
-        y -= 1;
-        m += 12;
-    }
-    
-    int a = y / 100;
-    int b = 2 - a + (a / 4);
-    
-    jd = (int)(365.25 * (y + 4716)) + (int)(30.6001 * (m + 1)) + d + b - 1524.5;
-    jd += (h + min / 60.0 + s / 3600.0) / 24.0;
-    
-    Serial.print("EphemerisCalculator::getCurrentJulianDate() calculated: ");
-    Serial.println(jd);
-}

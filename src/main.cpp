@@ -96,7 +96,7 @@ void loop() {
             setTime(gpsManager->getHour(), gpsManager->getMinute(), gpsManager->getSecond(),
                    gpsManager->getDay(), gpsManager->getMonth(), gpsManager->getYear());
             logManager->logInfo("GPS fix obtained, system time set");
-        } else if ((currentTime - gpsStartTime) > 600000) { // 10 minutes timeout
+        } else if ((currentTime - gpsStartTime) > 60) { // 10 minutes timeout
             gpsFixObtained = true;
             // Use default values
             gpsManager->setDefaultLocation();
