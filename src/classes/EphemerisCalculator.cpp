@@ -11,11 +11,11 @@ EphemerisCalculator::~EphemerisCalculator() {
 }
 
 int EphemerisCalculator::getMoonSettingHeading(float latitude, float longitude) {
-    Serial.print("EphemerisCalculator::getMoonSettingHeading(");
-    Serial.print(latitude);
-    Serial.print(", ");
-    Serial.print(longitude);
-    Serial.println(")");
+    // Serial.print("EphemerisCalculator::getMoonSettingHeading(");
+    // Serial.print(latitude);
+    // Serial.print(", ");
+    // Serial.print(longitude);
+    // Serial.println(")");
     
     // Set observer location
     int latDeg = (int)latitude;
@@ -40,17 +40,17 @@ int EphemerisCalculator::getMoonSettingHeading(float latitude, float longitude) 
     if (result < 0) result += 360;
     if (result >= 360) result -= 360;
     
-    Serial.print("EphemerisCalculator::getMoonSettingHeading() returning: ");
-    Serial.println(result);
+    // Serial.print("EphemerisCalculator::getMoonSettingHeading() returning: ");
+    // Serial.println(result);
     return result;
 }
 
 float EphemerisCalculator::getMoonAzimuth(float latitude, float longitude) {
-    Serial.print("EphemerisCalculator::getMoonAzimuth(");
-    Serial.print(latitude);
-    Serial.print(", ");
-    Serial.print(longitude);
-    Serial.println(")");
+    // Serial.print("EphemerisCalculator::getMoonAzimuth(");
+    // Serial.print(latitude);
+    // Serial.print(", ");
+    // Serial.print(longitude);
+    // Serial.println(")");
     
     // Set observer location
     int latDeg = (int)latitude;
@@ -68,17 +68,17 @@ float EphemerisCalculator::getMoonAzimuth(float latitude, float longitude) {
         moon.equaCoordinates, day(), month(), year(), hour(), minute(), second());
     
     float result = moonHorizontal.azi;
-    Serial.print("EphemerisCalculator::getMoonAzimuth() returning: ");
-    Serial.println(result);
+    // Serial.print("EphemerisCalculator::getMoonAzimuth() returning: ");
+    // Serial.println(result);
     return result;
 }
 
 float EphemerisCalculator::getMoonElevation(float latitude, float longitude) {
-    Serial.print("EphemerisCalculator::getMoonElevation(");
-    Serial.print(latitude);
-    Serial.print(", ");
-    Serial.print(longitude);
-    Serial.println(")");
+    // Serial.print("EphemerisCalculator::getMoonElevation(");
+    // Serial.print(latitude);
+    // Serial.print(", ");
+    // Serial.print(longitude);
+    // Serial.println(")");
     
     // Set observer location
     int latDeg = (int)latitude;
@@ -96,21 +96,21 @@ float EphemerisCalculator::getMoonElevation(float latitude, float longitude) {
         moon.equaCoordinates, day(), month(), year(), hour(), minute(), second());
     
     float result = moonHorizontal.alt;
-    Serial.print("EphemerisCalculator::getMoonElevation() returning: ");
-    Serial.println(result);
+    // Serial.print("EphemerisCalculator::getMoonElevation() returning: ");
+    // Serial.println(result);
     return result;
 }
 
 float EphemerisCalculator::calculateBearing(float lat1, float lon1, float lat2, float lon2) {
-    Serial.print("EphemerisCalculator::calculateBearing(");
-    Serial.print(lat1);
-    Serial.print(", ");
-    Serial.print(lon1);
-    Serial.print(", ");
-    Serial.print(lat2);
-    Serial.print(", ");
-    Serial.print(lon2);
-    Serial.println(")");
+    // Serial.print("EphemerisCalculator::calculateBearing(");
+    // Serial.print(lat1);
+    // Serial.print(", ");
+    // Serial.print(lon1);
+    // Serial.print(", ");
+    // Serial.print(lat2);
+    // Serial.print(", ");
+    // Serial.print(lon2);
+    // Serial.println(")");
     
     float dLon = (lon2 - lon1) * PI / 180.0;
     lat1 = lat1 * PI / 180.0;
@@ -122,8 +122,8 @@ float EphemerisCalculator::calculateBearing(float lat1, float lon1, float lat2, 
     float bearing = atan2(y, x) * 180.0 / PI;
     bearing = fmod((bearing + 360.0), 360.0);
     
-    Serial.print("EphemerisCalculator::calculateBearing() returning: ");
-    Serial.println(bearing);
+    // Serial.print("EphemerisCalculator::calculateBearing() returning: ");
+    // Serial.println(bearing);
     return bearing;
 }
 

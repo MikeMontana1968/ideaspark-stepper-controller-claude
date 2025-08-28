@@ -21,21 +21,32 @@ void GPSManager::begin() {
 }
 
 void GPSManager::update() {
+    static unsigned long last_timestamp = 0;
     // Serial.println("GPSManager::update()"); // Commented out - called frequently
     if (gpsSerial && gpsSerial->available()) {
         while (gpsSerial->available()) {
             if (gps.encode(gpsSerial->read())) {
-                // GPS data updated
+                unsigned long now = GPSManager::getUnixTimestamp();
+                if(now != last_timestamp) {
+                    last_timestamp = now;
+                    // Serial.print("*** GPSManager::update() - ");                    
+                    // Serial.printf("%02d:%02d:%02d", 
+                    //     gps.time.hour(), 
+                    //     gps.time.minute(), 
+                    //     gps.time.second()
+                    // );
+                    // Serial.println();
+                }
             }
         }
     }
 }
 
 bool GPSManager::hasValidFix() {
-    Serial.println("GPSManager::hasValidFix()");
+    //Serial.println("GPSManager::hasValidFix()");
     bool result = !useDefaults && gps.location.isValid() && gps.date.isValid() && gps.time.isValid();
-    Serial.print("GPSManager::hasValidFix() returning: ");
-    Serial.println(result);
+    //Serial.print("GPSManager::hasValidFix() returning: ");
+    //Serial.println(result);
     return result;
 }
 
@@ -45,73 +56,115 @@ void GPSManager::setDefaultLocation() {
 }
 
 float GPSManager::getLatitude() {
-    Serial.println("GPSManager::getLatitude()");
+    //Serial.println("GPSManager::getLatitude()");
     float result = useDefaults ? defaultLat : (float)gps.location.lat();
-    Serial.print("GPSManager::getLatitude() returning: ");
-    Serial.println(result);
+    // Serial.print("GPSManager::getLatitude() returning: ");
+    // Serial.println(result);
     return result;
 }
 
 float GPSManager::getLongitude() {
-    Serial.println("GPSManager::getLongitude()");
+    //Serial.println("GPSManager::getLongitude()");
     float result = useDefaults ? defaultLng : (float)gps.location.lng();
-    Serial.print("GPSManager::getLongitude() returning: ");
-    Serial.println(result);
+    // Serial.print("GPSManager::getLongitude() returning: ");
+    // Serial.println(result);
     return result;
 }
 
 float GPSManager::getAltitude() {
-    Serial.println("GPSManager::getAltitude()");
+    //Serial.println("GPSManager::getAltitude()");
     float result = useDefaults ? defaultAlt : (float)gps.altitude.meters();
-    Serial.print("GPSManager::getAltitude() returning: ");
-    Serial.println(result);
+    // Serial.print("GPSManager::getAltitude() returning: ");
+    // Serial.println(result);
     return result;
 }
 
 int GPSManager::getYear() {
-    Serial.println("GPSManager::getYear()");
+    //Serial.println("GPSManager::getYear()");
     int result = useDefaults ? 2025 : gps.date.year();
-    Serial.print("GPSManager::getYear() returning: ");
-    Serial.println(result);
+    //Serial.print("GPSManager::getYear() returning: ");
+    //Serial.println(result);
     return result;
 }
 
 int GPSManager::getMonth() {
-    Serial.println("GPSManager::getMonth()");
+    //Serial.println("GPSManager::getMonth()");
     int result = useDefaults ? 8 : gps.date.month();
-    Serial.print("GPSManager::getMonth() returning: ");
-    Serial.println(result);
+    //Serial.print("GPSManager::getMonth() returning: ");
+    ///Serial.println(result);
     return result;
 }
 
 int GPSManager::getDay() {
-    Serial.println("GPSManager::getDay()");
+    //Serial.println("GPSManager::getDay()");
     int result = useDefaults ? 27 : gps.date.day();
-    Serial.print("GPSManager::getDay() returning: ");
-    Serial.println(result);
+    //Serial.print("GPSManager::getDay() returning: ");
+    //Serial.println(result);
     return result;
 }
 
 int GPSManager::getHour() {
-    Serial.println("GPSManager::getHour()");
+    //Serial.println("GPSManager::getHour()");
     int result = useDefaults ? 12 : gps.time.hour();
-    Serial.print("GPSManager::getHour() returning: ");
-    Serial.println(result);
+    //Serial.print("GPSManager::getHour() returning: ");
+    //Serial.println(result);
     return result;
 }
 
 int GPSManager::getMinute() {
-    Serial.println("GPSManager::getMinute()");
+    //Serial.println("GPSManager::getMinute()");
     int result = useDefaults ? 0 : gps.time.minute();
-    Serial.print("GPSManager::getMinute() returning: ");
-    Serial.println(result);
+    //Serial.print("GPSManager::getMinute() returning: ");
+    //Serial.println(result);
     return result;
 }
 
 int GPSManager::getSecond() {
-    Serial.println("GPSManager::getSecond()");
+    //Serial.println("GPSManager::getSecond()");
     int result = useDefaults ? 0 : gps.time.second();
-    Serial.print("GPSManager::getSecond() returning: ");
-    Serial.println(result);
+    //Serial.print("GPSManager::getSecond() returning: ");
+    //Serial.println(result);
     return result;
+}
+
+unsigned long GPSManager::getUnixTimestamp() {
+    int year = getYear();
+    int month = getMonth();
+    int day = getDay();
+    int hour = getHour();
+    int minute = getMinute();
+    int second = getSecond();
+    
+    // Calculate days since Unix epoch (1970-01-01)
+    unsigned long days = 0;
+    
+    // Add days for complete years since 1970
+    for (int y = 1970; y < year; y++) {
+        if ((y % 4 == 0 && y % 100 != 0) || (y % 400 == 0)) {
+            days += 366; // Leap year
+        } else {
+            days += 365;
+        }
+    }
+    
+    // Days in each month (non-leap year)
+    int daysInMonth[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    
+    // Adjust February for leap year
+    if ((year % 4 == 0 && year % 100 != 0) || (year % 400 == 0)) {
+        daysInMonth[1] = 29;
+    }
+    
+    // Add days for complete months in current year
+    for (int m = 1; m < month; m++) {
+        days += daysInMonth[m - 1];
+    }
+    
+    // Add days in current month (minus 1 since we count from day 1)
+    days += day - 1;
+    
+    // Convert to seconds and add time components
+    unsigned long timestamp = days * 86400UL + hour * 3600UL + minute * 60UL + second;
+    
+    return timestamp;
 }

@@ -30,11 +30,11 @@ void DisplayManager::begin() {
 }
 
 void DisplayManager::updateDisplay(const String& statusText, const String& activityText) {
-    Serial.print("DisplayManager::updateDisplay(");
-    Serial.print(statusText);
-    Serial.print(", ");
-    Serial.print(activityText);
-    Serial.println(")");
+    // Serial.print("DisplayManager::updateDisplay(");
+    // Serial.print(statusText);
+    // Serial.print(", ");
+    // Serial.print(activityText);
+    // Serial.println(")");
     
     // Only update if text has changed
     if (statusText == lastStatusText && activityText == lastActivityText) {

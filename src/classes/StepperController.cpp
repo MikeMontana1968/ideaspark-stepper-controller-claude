@@ -20,18 +20,20 @@ StepperController::~StepperController() {
 
 void StepperController::begin() {
     Serial.println("StepperController::begin()");
-    // ULN2003 connected to pins 18, 19, 21, 22
-    stepper = new AccelStepper(AccelStepper::FULL4WIRE, 18, 19, 21, 22);
+    // ULN2003 connected to pins 25, 26, 27, 14
+    stepper = new AccelStepper(AccelStepper::FULL4WIRE, 25, 26, 27, 14);
     stepper->setMaxSpeed(1000);
     stepper->setAcceleration(500);
     calculateStepInterval();
 }
 
 void StepperController::update() {
-    // Serial.println("StepperController::update()"); // Commented out - called frequently
+    
     if (rotating && stepper) {
+        //Serial.println("StepperController::update()"); // Commented out - called frequently
         unsigned long currentTime = millis();
         if (currentTime - lastStepTime >= stepInterval) {
+            
             stepper->move(1);
             stepper->run();
             currentSteps++;
@@ -39,6 +41,7 @@ void StepperController::update() {
             
             // Reset step count after full revolution
             if (currentSteps >= stepsPerRevolution) {
+                Serial.println("StepperController::update() Completed 1 rotation");
                 currentSteps = 0;
             }
         }
@@ -76,22 +79,22 @@ void StepperController::rewind() {
 }
 
 float StepperController::getCurrentDegrees() {
-    Serial.println("StepperController::getCurrentDegrees()");
+    // Serial.println("StepperController::getCurrentDegrees()");
     float result = (float)currentSteps * 360.0 / (float)stepsPerRevolution;
-    Serial.print("StepperController::getCurrentDegrees() returning: ");
-    Serial.println(result);
+    // Serial.print("StepperController::getCurrentDegrees() returning: ");
+    // Serial.println(result);
     return result;
 }
 
 bool StepperController::isRotating() {
-    Serial.println("StepperController::isRotating()");
+    // Serial.println("StepperController::isRotating()");
     Serial.print("StepperController::isRotating() returning: ");
     Serial.println(rotating);
     return rotating;
 }
 
 void StepperController::calculateStepInterval() {
-    Serial.println("StepperController::calculateStepInterval()");
+    // Serial.println("StepperController::calculateStepInterval()");
     switch (currentSpeed) {
         case ONCE_PER_MINUTE:
             stepInterval = 60000.0 / stepsPerRevolution; // 1 minute in ms / steps

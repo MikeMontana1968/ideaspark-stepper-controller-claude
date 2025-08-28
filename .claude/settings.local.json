@@ -5,7 +5,8 @@
       "WebFetch(domain:github.com)",
       "Bash(pio run:*)",
       "Bash(git add:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

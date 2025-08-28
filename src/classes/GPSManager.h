@@ -24,6 +24,8 @@ public:
     int getHour();
     int getMinute();
     int getSecond();
+    
+    unsigned long getUnixTimestamp();
 
 private:
     TinyGPSPlus gps;

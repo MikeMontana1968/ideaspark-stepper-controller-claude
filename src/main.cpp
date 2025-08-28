@@ -57,6 +57,7 @@ void setup() {
     logManager->logInfo("System startup initiated");
     
     configManager = new ConfigurationManager();
+    configManager->setConfiguration({ONCE_PER_MINUTE, "00:00", 0, false});
     configManager->begin();
     
     gpsManager = new GPSManager();
@@ -74,6 +75,9 @@ void setup() {
     ephemerisCalc = new EphemerisCalculator();
     
     gpsStartTime = millis();
+    
+    stepperController->setRotationSpeed(ONCE_PER_MINUTE);
+    stepperController->startRotation();
     
     logManager->logInfo("System startup completed");
     Serial.println("System initialization complete");
@@ -96,7 +100,7 @@ void loop() {
             setTime(gpsManager->getHour(), gpsManager->getMinute(), gpsManager->getSecond(),
                    gpsManager->getDay(), gpsManager->getMonth(), gpsManager->getYear());
             logManager->logInfo("GPS fix obtained, system time set");
-        } else if ((currentTime - gpsStartTime) > 60) { // 10 minutes timeout
+        } else if ((currentTime - gpsStartTime) > 60 * 1000) { // 1 minutes timeout
             gpsFixObtained = true;
             // Use default values
             gpsManager->setDefaultLocation();
@@ -106,9 +110,9 @@ void loop() {
     
     // Update stepper motor position
     stepperController->update();
-    
-    // Update OLED display every 250ms
-    if (currentTime - lastStatusUpdate > 250) {
+
+    // Update OLED display every 1000ms
+    if (currentTime - lastStatusUpdate > 1000) {
         String statusText = buildStatusText();
         String activityText = buildActivityText();
         displayManager->updateDisplay(statusText, activityText);
@@ -149,10 +153,9 @@ String buildStatusText() {
     int latMin = (int)((lat - latDeg) * 60);
     int lngDeg = (int)lng;
     int lngMin = (int)((lng - lngDeg) * 60);
-    
-    return String(timeStr) + " " + String(degrees, 1) + "° " + 
-           String(latDeg) + " " + String(latMin) + ", " + 
-           String(lngDeg) + " " + String(lngMin) + " ";
+
+    return String(timeStr) + " [" + String(latDeg) + "' " + String(latMin) + ", " +
+           String(lngDeg) + "' " + String(lngMin) + "] ";
 }
 
 String buildActivityText() {
@@ -169,21 +172,21 @@ String buildActivityText() {
     int moonHeading = ephemerisCalc->getMoonSettingHeading(
         gpsManager->getLatitude(), gpsManager->getLongitude());
     
-    String result = "Mode: " + mode + " " + String(moonHeading) + "° ";
+    String result = "Mode: " + mode + " " + String(moonHeading) + "' ";
     
     // Check if we're before start time or calculate remaining time
     if (configManager->isBeforeStartTime()) {
         int remainingMins = configManager->getMinutesUntilStart();
         int hours = remainingMins / 60;
         int mins = remainingMins % 60;
-        result += "Begin in " + String(hours) + ":" + (mins < 10 ? "0" : "") + String(mins);
+        result += "Begin in " + String(hours) + "h " + (mins < 10 ? "0" : "") + String(mins);
     } else if (configManager->isCompleted()) {
         result += "completed";
     } else {
         int remainingMins = configManager->getRemainingMinutes();
         int hours = remainingMins / 60;
         int mins = remainingMins % 60;
-        result += "Remain " + String(hours) + ":" + (mins < 10 ? "0" : "") + String(mins);
+        result += "Remain " + String(hours) + "h " + (mins < 10 ? "0" : "") + String(mins);
     }
     
     return result;

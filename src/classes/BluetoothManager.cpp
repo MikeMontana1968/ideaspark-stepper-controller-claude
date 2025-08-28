@@ -1,9 +1,11 @@
 #include "BluetoothManager.h"
 #include "LogManager.h"
 #include "ConfigurationManager.h"
+#include "StepperController.h"
 
 extern LogManager* logManager;
 extern ConfigurationManager* configManager;
+extern StepperController* stepperController;
 
 BluetoothManager::BluetoothManager() {
     Serial.println("BluetoothManager::BluetoothManager()");
@@ -72,6 +74,8 @@ void BluetoothManager::processMenuSelection(char selection) {
             config.durationHours = 0;
             config.rewindAfterComplete = false;
             configManager->setConfiguration(config);
+            stepperController->setRotationSpeed(ONCE_PER_MINUTE);
+            stepperController->startRotation();
             btSerial.println("Configuration set: 1 rotation per minute");
             logManager->logInfo("Configuration changed to 1 rotation per minute");
             resetMenuState();
@@ -83,6 +87,8 @@ void BluetoothManager::processMenuSelection(char selection) {
             config.durationHours = 0;
             config.rewindAfterComplete = false;
             configManager->setConfiguration(config);
+            stepperController->setRotationSpeed(ONCE_PER_HOUR);
+            stepperController->startRotation();
             btSerial.println("Configuration set: 1 rotation per hour");
             logManager->logInfo("Configuration changed to 1 rotation per hour");
             resetMenuState();
@@ -94,6 +100,8 @@ void BluetoothManager::processMenuSelection(char selection) {
             config.durationHours = 0;
             config.rewindAfterComplete = false;
             configManager->setConfiguration(config);
+            stepperController->setRotationSpeed(ONCE_PER_DAY);
+            stepperController->startRotation();
             btSerial.println("Configuration set: 1 rotation per day");
             logManager->logInfo("Configuration changed to 1 rotation per day");
             resetMenuState();
@@ -172,9 +180,9 @@ void BluetoothManager::resetMenuState() {
 }
 
 void BluetoothManager::sendPrompt(const String& prompt) {
-    Serial.print("BluetoothManager::sendPrompt(");
-    Serial.print(prompt);
-    Serial.println(")");
+    // Serial.print("BluetoothManager::sendPrompt(");
+    // Serial.print(prompt);
+    // Serial.println(")");
     btSerial.print(prompt);
 }
 
@@ -182,7 +190,7 @@ String BluetoothManager::readInput() {
     Serial.println("BluetoothManager::readInput()");
     String result = inputBuffer;
     inputBuffer = "";
-    Serial.print("BluetoothManager::readInput() returning: ");
-    Serial.println(result);
+    // Serial.print("BluetoothManager::readInput() returning: ");
+    // Serial.println(result);
     return result;
 }

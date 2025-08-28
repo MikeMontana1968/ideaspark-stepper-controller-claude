@@ -41,16 +41,16 @@ void LogManager::begin() {
 }
 
 void LogManager::logInfo(const String& message) {
-    Serial.print("LogManager::logInfo(");
-    Serial.print(message);
-    Serial.println(")");
+    // Serial.print("LogManager::logInfo(");
+    // Serial.print(message);
+    // Serial.println(")");
     writeLogEntry("INFO", message);
 }
 
 void LogManager::logError(const String& message) {
-    Serial.print("LogManager::logError(");
-    Serial.print(message);
-    Serial.println(")");
+    // Serial.print("LogManager::logError(");
+    // Serial.print(message);
+    // Serial.println(")");
     writeLogEntry("ERROR", message);
 }
 
@@ -75,15 +75,15 @@ String LogManager::getLastLogContent() {
     // Reopen current log file for writing
     openNewLogFile();
     
-    Serial.print("LogManager::getLastLogContent() returning content of length: ");
-    Serial.println(content.length());
+    // Serial.print("LogManager::getLastLogContent() returning content of length: ");
+    // Serial.println(content.length());
     return content;
 }
 
 String LogManager::getLastLogLines(int numLines) {
-    Serial.print("LogManager::getLastLogLines(");
-    Serial.print(numLines);
-    Serial.println(")");
+    // Serial.print("LogManager::getLastLogLines(");
+    // Serial.print(numLines);
+    // Serial.println(")");
     
     String content = getLastLogContent();
     
@@ -96,15 +96,15 @@ String LogManager::getLastLogLines(int numLines) {
             lineCount++;
             if (lineCount == numLines) {
                 String result = content.substring(i + 1);
-                Serial.print("LogManager::getLastLogLines() returning: ");
-                Serial.println(result);
+                // Serial.print("LogManager::getLastLogLines() returning: ");
+                // Serial.println(result);
                 return result;
             }
         }
     }
     
-    Serial.print("LogManager::getLastLogLines() returning: ");
-    Serial.println(content);
+    // Serial.print("LogManager::getLastLogLines() returning: ");
+    // Serial.println(content);
     return content;
 }
 
@@ -223,11 +223,11 @@ String LogManager::getCurrentLogFileName() {
 }
 
 void LogManager::writeLogEntry(const String& level, const String& message) {
-    Serial.print("LogManager::writeLogEntry(");
-    Serial.print(level);
-    Serial.print(", ");
-    Serial.print(message);
-    Serial.println(")");
+    // Serial.print("LogManager::writeLogEntry(");
+    // Serial.print(level);
+    // Serial.print(", ");
+    // Serial.print(message);
+    // Serial.println(")");
     
     if (!currentLogFile) {
         openNewLogFile();
@@ -251,14 +251,14 @@ void LogManager::writeLogEntry(const String& level, const String& message) {
 }
 
 String LogManager::getTimestamp() {
-    Serial.println("LogManager::getTimestamp()");
+    // Serial.println("LogManager::getTimestamp()");
     
     char timestamp[24];
     sprintf(timestamp, "%04d-%02d-%02d %02d:%02d:%02d",
             year(), month(), day(), hour(), minute(), second());
     
     String result = String(timestamp);
-    Serial.print("LogManager::getTimestamp() returning: ");
-    Serial.println(result);
+    // Serial.print("LogManager::getTimestamp() returning: ");
+    // Serial.println(result);
     return result;
 }

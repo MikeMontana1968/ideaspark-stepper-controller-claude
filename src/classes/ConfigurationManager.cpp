@@ -21,9 +21,9 @@ void ConfigurationManager::begin() {
 }
 
 Configuration ConfigurationManager::getConfiguration() {
-    Serial.println("ConfigurationManager::getConfiguration()");
-    Serial.print("ConfigurationManager::getConfiguration() returning speed: ");
-    Serial.println(currentConfig.rotationSpeed);
+    // Serial.println("ConfigurationManager::getConfiguration()");
+    // Serial.print("ConfigurationManager::getConfiguration() returning speed: ");
+    // Serial.println(currentConfig.rotationSpeed);
     return currentConfig;
 }
 
@@ -91,11 +91,11 @@ void ConfigurationManager::saveConfiguration() {
 }
 
 bool ConfigurationManager::isBeforeStartTime() {
-    Serial.println("ConfigurationManager::isBeforeStartTime()");
+    // Serial.println("ConfigurationManager::isBeforeStartTime()");
     
     if (currentConfig.startTime == "00:00" || currentConfig.startTime.length() == 0) {
-        Serial.print("ConfigurationManager::isBeforeStartTime() returning: ");
-        Serial.println(false);
+        // Serial.print("ConfigurationManager::isBeforeStartTime() returning: ");
+        // Serial.println(false);
         return false; // Start immediately
     }
     
@@ -103,17 +103,17 @@ bool ConfigurationManager::isBeforeStartTime() {
     int currentMinutes = getCurrentMinutes();
     
     bool result = currentMinutes < startMinutes;
-    Serial.print("ConfigurationManager::isBeforeStartTime() returning: ");
-    Serial.println(result);
+    // Serial.print("ConfigurationManager::isBeforeStartTime() returning: ");
+    // Serial.println(result);
     return result;
 }
 
 bool ConfigurationManager::isCompleted() {
-    Serial.println("ConfigurationManager::isCompleted()");
+    // Serial.println("ConfigurationManager::isCompleted()");
     
     if (currentConfig.durationHours == 0) {
-        Serial.print("ConfigurationManager::isCompleted() returning: ");
-        Serial.println(false);
+        // Serial.print("ConfigurationManager::isCompleted() returning: ");
+        // Serial.println(false);
         return false; // Continuous rotation
     }
     
@@ -122,8 +122,8 @@ bool ConfigurationManager::isCompleted() {
     }
     
     if (rotationStartTime == 0) {
-        Serial.print("ConfigurationManager::isCompleted() returning: ");
-        Serial.println(false);
+        // Serial.print("ConfigurationManager::isCompleted() returning: ");
+        // Serial.println(false);
         return false;
     }
     
@@ -131,13 +131,13 @@ bool ConfigurationManager::isCompleted() {
     unsigned long durationMs = (unsigned long)currentConfig.durationHours * 3600000UL;
     
     bool result = elapsedMs >= durationMs;
-    Serial.print("ConfigurationManager::isCompleted() returning: ");
+    // Serial.print("ConfigurationManager::isCompleted() returning: ");
     Serial.println(result);
     return result;
 }
 
 int ConfigurationManager::getMinutesUntilStart() {
-    Serial.println("ConfigurationManager::getMinutesUntilStart()");
+    // Serial.println("ConfigurationManager::getMinutesUntilStart()");
     
     int startMinutes = parseTimeToMinutes(currentConfig.startTime);
     int currentMinutes = getCurrentMinutes();
@@ -147,23 +147,23 @@ int ConfigurationManager::getMinutesUntilStart() {
         result += 24 * 60; // Add a day
     }
     
-    Serial.print("ConfigurationManager::getMinutesUntilStart() returning: ");
-    Serial.println(result);
+    // Serial.print("ConfigurationManager::getMinutesUntilStart() returning: ");
+    // Serial.println(result);
     return result;
 }
 
 int ConfigurationManager::getRemainingMinutes() {
-    Serial.println("ConfigurationManager::getRemainingMinutes()");
+    // Serial.println("ConfigurationManager::getRemainingMinutes()");
     
     if (currentConfig.durationHours == 0) {
-        Serial.print("ConfigurationManager::getRemainingMinutes() returning: ");
-        Serial.println(999999);
+        // Serial.print("ConfigurationManager::getRemainingMinutes() returning: ");
+        // Serial.println(999999);
         return 999999; // Continuous
     }
     
     if (rotationStartTime == 0) {
-        Serial.print("ConfigurationManager::getRemainingMinutes() returning: ");
-        Serial.println(currentConfig.durationHours * 60);
+        // Serial.print("ConfigurationManager::getRemainingMinutes() returning: ");
+        // Serial.println(currentConfig.durationHours * 60);
         return currentConfig.durationHours * 60;
     }
     
@@ -171,22 +171,22 @@ int ConfigurationManager::getRemainingMinutes() {
     unsigned long durationMs = (unsigned long)currentConfig.durationHours * 3600000UL;
     
     if (elapsedMs >= durationMs) {
-        Serial.print("ConfigurationManager::getRemainingMinutes() returning: ");
-        Serial.println(0);
+        // Serial.print("ConfigurationManager::getRemainingMinutes() returning: ");
+        // Serial.println(0);
         return 0;
     }
     
     unsigned long remainingMs = durationMs - elapsedMs;
     int result = remainingMs / 60000;
     
-    Serial.print("ConfigurationManager::getRemainingMinutes() returning: ");
-    Serial.println(result);
+    // Serial.print("ConfigurationManager::getRemainingMinutes() returning: ");
+    // Serial.println(result);
     return result;
 }
 
 void ConfigurationManager::setDefaultConfiguration() {
     Serial.println("ConfigurationManager::setDefaultConfiguration()");
-    currentConfig.rotationSpeed = ONCE_PER_DAY;
+    currentConfig.rotationSpeed = ONCE_PER_MINUTE;
     currentConfig.startTime = "00:00";
     currentConfig.durationHours = 0;
     currentConfig.rewindAfterComplete = false;
@@ -194,14 +194,14 @@ void ConfigurationManager::setDefaultConfiguration() {
 }
 
 int ConfigurationManager::parseTimeToMinutes(const String& timeStr) {
-    Serial.print("ConfigurationManager::parseTimeToMinutes(");
-    Serial.print(timeStr);
-    Serial.println(")");
+    // Serial.print("ConfigurationManager::parseTimeToMinutes(");
+    // Serial.print(timeStr);
+    // Serial.println(")");
     
     int colonIndex = timeStr.indexOf(':');
     if (colonIndex == -1) {
-        Serial.print("ConfigurationManager::parseTimeToMinutes() returning: ");
-        Serial.println(0);
+        // Serial.print("ConfigurationManager::parseTimeToMinutes() returning: ");
+        // Serial.println(0);
         return 0;
     }
     
@@ -209,15 +209,15 @@ int ConfigurationManager::parseTimeToMinutes(const String& timeStr) {
     int minutes = timeStr.substring(colonIndex + 1).toInt();
     
     int result = hours * 60 + minutes;
-    Serial.print("ConfigurationManager::parseTimeToMinutes() returning: ");
-    Serial.println(result);
+    // Serial.print("ConfigurationManager::parseTimeToMinutes() returning: ");
+    // Serial.println(result);
     return result;
 }
 
 int ConfigurationManager::getCurrentMinutes() {
-    Serial.println("ConfigurationManager::getCurrentMinutes()");
+    // Serial.println("ConfigurationManager::getCurrentMinutes()");
     int result = hour() * 60 + minute();
-    Serial.print("ConfigurationManager::getCurrentMinutes() returning: ");
-    Serial.println(result);
+    // Serial.print("ConfigurationManager::getCurrentMinutes() returning: ");
+    // Serial.println(result);
     return result;
 }
