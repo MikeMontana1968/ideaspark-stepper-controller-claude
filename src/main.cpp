@@ -9,7 +9,6 @@
 #include "classes/ConfigurationManager.h"
 #include "classes/LogManager.h"
 #include "classes/EphemerisCalculator.h"
-#include "classes/VoltageMonitor.h"
 
 const String PROMPT_VERSION = "Prompt Document Version 1.0.2";
 
@@ -26,7 +25,6 @@ BluetoothManager* bluetoothManager;
 ConfigurationManager* configManager;
 LogManager* logManager;
 EphemerisCalculator* ephemerisCalc;
-VoltageMonitor* voltageMonitor;
 
 unsigned long lastStatusUpdate = 0;
 unsigned long lastSerialOutput = 0;
@@ -76,8 +74,47 @@ void setup() {
     
     ephemerisCalc = new EphemerisCalculator();
     
-    voltageMonitor = new VoltageMonitor();
-    voltageMonitor->begin();
+    // Calculate and display sunrise/sunset times for current location
+    int sunriseHour, sunriseMinute, sunsetHour, sunsetMinute;
+    float long_Edison = 74.39370;  // Example longitude for Edison, NJ
+    float lat_Edison = 40.51246;     // Example latitude for Edison, NJ
+
+    //Ephemeris::setLocationOnEarth(48,50,11, -2,20,14);
+    Ephemeris::setLocationOnEarth(40,31,7, -74,24,34);
+    Ephemeris::flipLongitude(true);
+    Ephemeris::setAltitude(75);                                
+    int day=29,month=8,year=2025,hour=15,minute=43;
+    float second=0;
+    SolarSystemObject solarSystemObject = Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, hour, minute, 0);
+    
+    Ephemeris::floatingHoursToHoursMinutesSeconds(solarSystemObject.rise, &hour, &minute, &second);
+    Serial.print("Rise: ");
+    Serial.print(hour);
+    Serial.print("h");
+    Serial.print(minute);
+    Serial.print("m");
+    Serial.print(second);
+    Serial.println("s");
+
+    Ephemeris::floatingHoursToHoursMinutesSeconds(solarSystemObject.set, &hour, &minute, &second);
+    Serial.print("Set:  ");
+    Serial.print(hour);
+    Serial.print("h");
+    Serial.print(minute);
+    Serial.print("m");
+    Serial.print(second);
+    Serial.println("s");
+
+ Serial.println("==================================================");
+
+    ephemerisCalc->getSunriseSunsetTimes(lat_Edison, long_Edison, 
+                                        sunriseHour, sunriseMinute, sunsetHour, sunsetMinute);
+    
+    Serial.print("Sunrise: ");
+    Serial.printf("%02d:%02d", sunriseHour, sunriseMinute);
+    Serial.print(" | Sunset: ");
+    Serial.printf("%02d:%02d", sunsetHour, sunsetMinute);
+    Serial.println();
     
     gpsStartTime = millis();
     
@@ -177,10 +214,7 @@ String buildActivityText() {
     int moonHeading = ephemerisCalc->getMoonSettingHeading(
         gpsManager->getLatitude(), gpsManager->getLongitude());
     
-    // Get voltage status
-    String voltage = voltageMonitor->getStatus();
-    
-    String result = "Mode: " + mode + " " + String(moonHeading) + "' " + voltage + " ";
+    String result = "Mode: " + mode + " " + String(moonHeading) + "' ";
     
     // Check if we're before start time or calculate remaining time
     if (configManager->isBeforeStartTime()) {

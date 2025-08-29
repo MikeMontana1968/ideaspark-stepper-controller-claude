@@ -12,7 +12,7 @@ enum RotationSpeed {
 
 class StepperController {
 public:
-    StepperController();
+    StepperController(uint8_t pin1 = 25, uint8_t pin2 = 26, uint8_t pin3 = 27, uint8_t pin4 = 14);
     ~StepperController();
     
     void begin();
@@ -24,6 +24,7 @@ public:
     float getCurrentDegrees();
     bool isRotating();
     void releaseCoils();
+    String getPins();
 
 private:
     AccelStepper* stepper;
@@ -33,6 +34,7 @@ private:
     long currentSteps;
     bool rotating;
     float stepInterval; // milliseconds between steps
+    uint8_t pin1, pin2, pin3, pin4; // GPIO pins for stepper motor
     
     void calculateStepInterval();
 };

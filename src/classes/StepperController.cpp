@@ -1,6 +1,6 @@
 #include "StepperController.h"
 
-StepperController::StepperController() {
+StepperController::StepperController(uint8_t pin1, uint8_t pin2, uint8_t pin3, uint8_t pin4) {
     Serial.println("StepperController::StepperController()");
     stepper = nullptr;
     currentSpeed = ONCE_PER_DAY;
@@ -9,6 +9,10 @@ StepperController::StepperController() {
     currentSteps = 0;
     rotating = false;
     stepInterval = 0;
+    this->pin1 = pin1;
+    this->pin2 = pin2;
+    this->pin3 = pin3;
+    this->pin4 = pin4;
 }
 
 StepperController::~StepperController() {
@@ -20,8 +24,8 @@ StepperController::~StepperController() {
 
 void StepperController::begin() {
     Serial.println("StepperController::begin()");
-    // ULN2003 connected to pins 25, 26, 27, 14
-    stepper = new AccelStepper(AccelStepper::FULL4WIRE, 25, 26, 27, 14);
+    // ULN2003 connected to configurable pins
+    stepper = new AccelStepper(AccelStepper::FULL4WIRE, pin1, pin2, pin3, pin4);
     stepper->setMaxSpeed(1000);
     stepper->setAcceleration(500);
     calculateStepInterval();
@@ -39,7 +43,8 @@ void StepperController::update() {
             currentSteps++;
             lastStepTime = currentTime;
             
-            // Release coils after step to prevent heating
+            // Allow time for motor to complete step before releasing coils
+            delay(50); // 50ms delay for motor to physically move
             releaseCoils();
             
             // Reset step count after full revolution
@@ -118,4 +123,8 @@ void StepperController::releaseCoils() {
     if (stepper) {
         stepper->disableOutputs();
     }
+}
+
+String StepperController::getPins() {
+    return "Pin1: " + String(pin1) + ", Pin2: " + String(pin2) + ", Pin3: " + String(pin3) + ", Pin4: " + String(pin4);
 }

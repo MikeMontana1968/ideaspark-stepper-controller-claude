@@ -127,3 +127,29 @@ float EphemerisCalculator::calculateBearing(float lat1, float lon1, float lat2, 
     return bearing;
 }
 
+void EphemerisCalculator::getSunriseSunsetTimes(float latitude, float longitude, int& sunriseHour, int& sunriseMinute, int& sunsetHour, int& sunsetMinute) {
+    // Set observer location
+    int latDeg = (int)latitude;
+    int latMin = (int)((latitude - latDeg) * 60);
+    float latSec = ((latitude - latDeg) * 60 - latMin) * 60;
+    int lonDeg = (int)longitude;
+    int lonMin = (int)((longitude - lonDeg) * 60);
+    float lonSec = ((longitude - lonDeg) * 60 - lonMin) * 60;
+    
+    Ephemeris::setLocationOnEarth(latDeg, latMin, latSec, lonDeg, lonMin, lonSec);
+    Ephemeris::setAltitude(39);
+    // Get sun rise and set times
+    SolarSystemObject sun = Ephemeris::solarSystemObjectAtDateAndTime(
+        Sun, day(), month(), year(), hour(), minute(), second());
+    
+    // Convert rise time from decimal hours to hours and minutes
+    float sunriseFloat = sun.rise;
+    sunriseHour = (int)sunriseFloat;
+    sunriseMinute = (int)((sunriseFloat - sunriseHour) * 60);
+    
+    // Convert set time from decimal hours to hours and minutes  
+    float sunsetFloat = sun.set;
+    sunsetHour = (int)sunsetFloat;
+    sunsetMinute = (int)((sunsetFloat - sunsetHour) * 60);
+}
+
