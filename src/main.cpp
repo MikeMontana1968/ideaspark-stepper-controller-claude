@@ -8,7 +8,8 @@
 #include "classes/BluetoothManager.h"
 #include "classes/ConfigurationManager.h"
 #include "classes/LogManager.h"
-#include "classes/EphemerisCalculator.h"
+#include <SolarCalculator.h> // For sun data
+#include <MoonRise.h> // For moon data
 
 const String PROMPT_VERSION = "Prompt Document Version 1.0.2";
 
@@ -24,13 +25,97 @@ DisplayManager* displayManager;
 BluetoothManager* bluetoothManager;
 ConfigurationManager* configManager;
 LogManager* logManager;
-EphemerisCalculator* ephemerisCalc;
 
 unsigned long lastStatusUpdate = 0;
 unsigned long lastSerialOutput = 0;
 unsigned long lastLogEntry = 0;
 unsigned long gpsStartTime = 0;
 bool gpsFixObtained = false;
+
+// Set your geographic coordinates here
+double MY_LATITUDE = 40.7128; // Example: New York City
+double MY_LONGITUDE = -74.0060; // Example: New York City
+int UTC_OFFSET_HOURS = -5; // For New York (Eastern Standard Time)
+// Use an RTC to maintain accurate time
+
+// Create objects for the libraries
+MoonRise moonCalc;
+
+void printDate(time_t date) {
+  char buff[20];
+  sprintf(buff, "%2d-%02d-%4d %02d:%02d:%02d", day(date), month(date), year(date), hour(date), minute(date), second(date));
+  Serial.print(buff);
+}
+// A helper function to print times correctly
+void printTime(double hours) {
+  int h = (int)hours;
+  int m = (int)((hours - h) * 60);
+  int s = (int)((hours - h - m/60.0) * 3600);
+  if (h < 10) Serial.print("0");
+  Serial.print(h);
+  Serial.print(":");
+  if (m < 10) Serial.print("0");
+  Serial.print(m);
+  Serial.print(":");
+  if (s < 10) Serial.print("0");
+  Serial.print(s);
+}
+
+void testCalcs() {
+    moonCalc.calculate(MY_LATITUDE, MY_LONGITUDE, now());
+
+    time_t utc = now() - (UTC_OFFSET_HOURS * 3600); // SolarCalculator works with UTC
+
+  // --- Sun Calculations ---
+  double transit, sunrise, sunset;
+  calcSunriseSunset(utc, MY_LATITUDE, MY_LONGITUDE, transit, sunrise, sunset);
+
+  Serial.println("\n--- Sun Data ---");
+  Serial.print("Current time: ");
+  Serial.print(hour());
+  Serial.print(":");
+  Serial.print(minute());
+  Serial.print(":");
+  Serial.println(second());
+
+  Serial.print("Sunrise: ");
+  printTime(sunrise + UTC_OFFSET_HOURS);
+  Serial.println();
+
+  Serial.print("Sunset: ");
+  printTime(sunset + UTC_OFFSET_HOURS);
+  Serial.println();
+
+  // --- Moon Calculations ---
+  Serial.println("\n--- Moon Data ---");
+  moonCalc.calculate(MY_LATITUDE, MY_LONGITUDE, now());
+  
+  if (moonCalc.hasRise) {
+    Serial.print("Moon Rise: ");
+    printDate(moonCalc.riseTime);
+    Serial.print(" (Az: ");
+    Serial.print(moonCalc.riseAz);
+    Serial.println("°)");
+  } else {
+    Serial.println("Moon Rise: None today");
+  }
+
+  if (moonCalc.hasSet) {
+    Serial.print("Moon Set: ");
+    printDate(moonCalc.setTime);
+    Serial.print(" (Az: ");
+    Serial.print(moonCalc.setAz);
+    Serial.println("°)");
+  } else {
+    Serial.println("Moon Set: None today");
+  }
+
+  Serial.print("Moon currently visible: ");
+  Serial.println(moonCalc.isVisible ? "Yes" : "No");
+
+}
+
+
 
 void setup() {
     Serial.begin(115200);
@@ -72,49 +157,6 @@ void setup() {
     bluetoothManager = new BluetoothManager();
     bluetoothManager->begin();
     
-    ephemerisCalc = new EphemerisCalculator();
-    
-    // Calculate and display sunrise/sunset times for current location
-    int sunriseHour, sunriseMinute, sunsetHour, sunsetMinute;
-    float long_Edison = 74.39370;  // Example longitude for Edison, NJ
-    float lat_Edison = 40.51246;     // Example latitude for Edison, NJ
-
-    //Ephemeris::setLocationOnEarth(48,50,11, -2,20,14);
-    Ephemeris::setLocationOnEarth(40,31,7, -74,24,34);
-    Ephemeris::flipLongitude(true);
-    Ephemeris::setAltitude(75);                                
-    int day=29,month=8,year=2025,hour=15,minute=43;
-    float second=0;
-    SolarSystemObject solarSystemObject = Ephemeris::solarSystemObjectAtDateAndTime(Sun, day, month, year, hour, minute, 0);
-    
-    Ephemeris::floatingHoursToHoursMinutesSeconds(solarSystemObject.rise, &hour, &minute, &second);
-    Serial.print("Rise: ");
-    Serial.print(hour);
-    Serial.print("h");
-    Serial.print(minute);
-    Serial.print("m");
-    Serial.print(second);
-    Serial.println("s");
-
-    Ephemeris::floatingHoursToHoursMinutesSeconds(solarSystemObject.set, &hour, &minute, &second);
-    Serial.print("Set:  ");
-    Serial.print(hour);
-    Serial.print("h");
-    Serial.print(minute);
-    Serial.print("m");
-    Serial.print(second);
-    Serial.println("s");
-
- Serial.println("==================================================");
-
-    ephemerisCalc->getSunriseSunsetTimes(lat_Edison, long_Edison, 
-                                        sunriseHour, sunriseMinute, sunsetHour, sunsetMinute);
-    
-    Serial.print("Sunrise: ");
-    Serial.printf("%02d:%02d", sunriseHour, sunriseMinute);
-    Serial.print(" | Sunset: ");
-    Serial.printf("%02d:%02d", sunsetHour, sunsetMinute);
-    Serial.println();
     
     gpsStartTime = millis();
     
@@ -123,7 +165,11 @@ void setup() {
     
     logManager->logInfo("System startup completed");
     Serial.println("System initialization complete");
+
+    // Initialize moon calculator with current time
+
 }
+
 
 void loop() {
     unsigned long currentTime = millis();
@@ -142,6 +188,7 @@ void loop() {
             setTime(gpsManager->getHour(), gpsManager->getMinute(), gpsManager->getSecond(),
                    gpsManager->getDay(), gpsManager->getMonth(), gpsManager->getYear());
             logManager->logInfo("GPS fix obtained, system time set");
+            testCalcs();
         } else if ((currentTime - gpsStartTime) > 60 * 1000) { // 1 minutes timeout
             gpsFixObtained = true;
             // Use default values
@@ -196,6 +243,7 @@ String buildStatusText() {
     int lngDeg = (int)lng;
     int lngMin = (int)((lng - lngDeg) * 60);
 
+    testCalcs();
     return String(timeStr) + " [" + String(latDeg) + "' " + String(latMin) + ", " +
            String(lngDeg) + "' " + String(lngMin) + "] ";
 }
@@ -210,11 +258,7 @@ String buildActivityText() {
         case ONCE_PER_DAY: mode = "1d"; break;
     }
     
-    // Calculate moon setting compass heading
-    int moonHeading = ephemerisCalc->getMoonSettingHeading(
-        gpsManager->getLatitude(), gpsManager->getLongitude());
-    
-    String result = "Mode: " + mode + " " + String(moonHeading) + "' ";
+    String result = "Mode: " + mode + " ";
     
     // Check if we're before start time or calculate remaining time
     if (configManager->isBeforeStartTime()) {
