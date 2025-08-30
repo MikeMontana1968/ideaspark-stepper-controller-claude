@@ -6,7 +6,16 @@
       "Bash(pio run:*)",
       "Bash(git add:*)",
       "Bash(git push:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Read(C:\\Users\\mikem\\OneDrive\\Documents\\PlatformIO\\Projects/**)",
+      "Read(C:\\Users\\mikem\\OneDrive\\Documents\\PlatformIO\\Projects\\Test-BT-Client/**)",
+      "Read(C:\\Users\\mikem\\OneDrive\\Documents\\PlatformIO\\Projects\\Test-BT-Client/**)",
+      "Read(C:\\Users\\mikem\\OneDrive\\Documents\\PlatformIO\\Projects\\Test-BT-Client/**)",
+      "Read(C:\\Users\\mikem\\OneDrive\\Documents\\PlatformIO\\Projects\\Test-BT-Client/**)",
+      "Read(C:\\Users\\mikem\\OneDrive\\Documents\\PlatformIO\\Projects\\Test-BT-Client/**)",
+      "Read(C:\\Users\\mikem\\OneDrive\\Documents\\PlatformIO\\Projects\\Test-BT-Client/**)",
+      "Bash(git rm:*)",
+      "Bash(pio pkg search:*)"
     ],
     "deny": [],
     "ask": []

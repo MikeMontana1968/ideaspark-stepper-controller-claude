@@ -8,8 +8,7 @@
 #include "classes/BluetoothManager.h"
 #include "classes/ConfigurationManager.h"
 #include "classes/LogManager.h"
-#include <SolarCalculator.h> // For sun data
-#include <MoonRise.h> // For moon data
+#include "classes/Ephemeris.h"
 
 const String PROMPT_VERSION = "Prompt Document Version 1.0.2";
 
@@ -25,95 +24,13 @@ DisplayManager* displayManager;
 BluetoothManager* bluetoothManager;
 ConfigurationManager* configManager;
 LogManager* logManager;
+Ephemeris* ephemeris;
 
 unsigned long lastStatusUpdate = 0;
 unsigned long lastSerialOutput = 0;
 unsigned long lastLogEntry = 0;
 unsigned long gpsStartTime = 0;
 bool gpsFixObtained = false;
-
-// Set your geographic coordinates here
-double MY_LATITUDE = 40.7128; // Example: New York City
-double MY_LONGITUDE = -74.0060; // Example: New York City
-int UTC_OFFSET_HOURS = -5; // For New York (Eastern Standard Time)
-// Use an RTC to maintain accurate time
-
-// Create objects for the libraries
-MoonRise moonCalc;
-
-void printDate(time_t date) {
-  char buff[20];
-  sprintf(buff, "%2d-%02d-%4d %02d:%02d:%02d", day(date), month(date), year(date), hour(date), minute(date), second(date));
-  Serial.print(buff);
-}
-// A helper function to print times correctly
-void printTime(double hours) {
-  int h = (int)hours;
-  int m = (int)((hours - h) * 60);
-  int s = (int)((hours - h - m/60.0) * 3600);
-  if (h < 10) Serial.print("0");
-  Serial.print(h);
-  Serial.print(":");
-  if (m < 10) Serial.print("0");
-  Serial.print(m);
-  Serial.print(":");
-  if (s < 10) Serial.print("0");
-  Serial.print(s);
-}
-
-void testCalcs() {
-    moonCalc.calculate(MY_LATITUDE, MY_LONGITUDE, now());
-
-    time_t utc = now() - (UTC_OFFSET_HOURS * 3600); // SolarCalculator works with UTC
-
-  // --- Sun Calculations ---
-  double transit, sunrise, sunset;
-  calcSunriseSunset(utc, MY_LATITUDE, MY_LONGITUDE, transit, sunrise, sunset);
-
-  Serial.println("\n--- Sun Data ---");
-  Serial.print("Current time: ");
-  Serial.print(hour());
-  Serial.print(":");
-  Serial.print(minute());
-  Serial.print(":");
-  Serial.println(second());
-
-  Serial.print("Sunrise: ");
-  printTime(sunrise + UTC_OFFSET_HOURS);
-  Serial.println();
-
-  Serial.print("Sunset: ");
-  printTime(sunset + UTC_OFFSET_HOURS);
-  Serial.println();
-
-  // --- Moon Calculations ---
-  Serial.println("\n--- Moon Data ---");
-  moonCalc.calculate(MY_LATITUDE, MY_LONGITUDE, now());
-  
-  if (moonCalc.hasRise) {
-    Serial.print("Moon Rise: ");
-    printDate(moonCalc.riseTime);
-    Serial.print(" (Az: ");
-    Serial.print(moonCalc.riseAz);
-    Serial.println("°)");
-  } else {
-    Serial.println("Moon Rise: None today");
-  }
-
-  if (moonCalc.hasSet) {
-    Serial.print("Moon Set: ");
-    printDate(moonCalc.setTime);
-    Serial.print(" (Az: ");
-    Serial.print(moonCalc.setAz);
-    Serial.println("°)");
-  } else {
-    Serial.println("Moon Set: None today");
-  }
-
-  Serial.print("Moon currently visible: ");
-  Serial.println(moonCalc.isVisible ? "Yes" : "No");
-
-}
 
 
 
@@ -157,7 +74,8 @@ void setup() {
     bluetoothManager = new BluetoothManager();
     bluetoothManager->begin();
     
-    
+    ephemeris = new Ephemeris(gpsManager);
+
     gpsStartTime = millis();
     
     stepperController->setRotationSpeed(ONCE_PER_MINUTE);
@@ -165,9 +83,6 @@ void setup() {
     
     logManager->logInfo("System startup completed");
     Serial.println("System initialization complete");
-
-    // Initialize moon calculator with current time
-
 }
 
 
@@ -184,16 +99,33 @@ void loop() {
     if (!gpsFixObtained) {
         if (gpsManager->hasValidFix()) {
             gpsFixObtained = true;
-            // Set system time from GPS
-            setTime(gpsManager->getHour(), gpsManager->getMinute(), gpsManager->getSecond(),
-                   gpsManager->getDay(), gpsManager->getMonth(), gpsManager->getYear());
-            logManager->logInfo("GPS fix obtained, system time set");
-            testCalcs();
+            // Set system time from GPS (convert UTC to local time)
+            int timezoneOffset = gpsManager->getTimezoneOffset();
+            time_t utcTime = makeTime({gpsManager->getSecond(), gpsManager->getMinute(), gpsManager->getHour(),
+                                      0, gpsManager->getDay(), gpsManager->getMonth(), gpsManager->getYear()});
+            time_t localTime = utcTime + (timezoneOffset * 3600);
+            setTime(localTime);
+            String tzMsg = "GPS fix obtained, system time set, timezone: UTC";
+            if (timezoneOffset >= 0) tzMsg += "+";
+            tzMsg += String(timezoneOffset);
+            if (gpsManager->isDST()) tzMsg += " (DST)";
+            logManager->logInfo(tzMsg);
+            Serial.println(tzMsg);
+            ephemeris->setCurrentTime(gpsManager->getUnixTimestamp());
+            ephemeris->setLatitude(gpsManager->getLatitude());
+            ephemeris->setLongitude(gpsManager->getLongitude());
+            ephemeris->getAlmanacSummary();
         } else if ((currentTime - gpsStartTime) > 60 * 1000) { // 1 minutes timeout
             gpsFixObtained = true;
             // Use default values
             gpsManager->setDefaultLocation();
-            logManager->logInfo("GPS timeout, using default location and build time");
+            int timezoneOffset = gpsManager->getTimezoneOffset();
+            String tzMsg = "GPS timeout, using default location, timezone: UTC";
+            if (timezoneOffset >= 0) tzMsg += "+";
+            tzMsg += String(timezoneOffset);
+            if (gpsManager->isDST()) tzMsg += " (DST)";
+            logManager->logInfo(tzMsg);
+            Serial.println(tzMsg);
         }
     }
     
@@ -242,24 +174,22 @@ String buildStatusText() {
     int latMin = (int)((lat - latDeg) * 60);
     int lngDeg = (int)lng;
     int lngMin = (int)((lng - lngDeg) * 60);
+    String mode;
+    Configuration config = configManager->getConfiguration();
 
-    testCalcs();
-    return String(timeStr) + " [" + String(latDeg) + "' " + String(latMin) + ", " +
-           String(lngDeg) + "' " + String(lngMin) + "] ";
+    switch(config.rotationSpeed) {
+        case ONCE_PER_MINUTE: mode = "Min"; break;
+        case ONCE_PER_HOUR: mode = "Hour"; break;
+        case ONCE_PER_DAY: mode = "Day"; break;
+    }
+   return String(timeStr) + " " + "1x" + mode + " " + String(latDeg) + "' " + String(latMin);
 }
 
 String buildActivityText() {
-    Configuration config = configManager->getConfiguration();
     String mode;
     
-    switch(config.rotationSpeed) {
-        case ONCE_PER_MINUTE: mode = "1m"; break;
-        case ONCE_PER_HOUR: mode = "1h"; break;
-        case ONCE_PER_DAY: mode = "1d"; break;
-    }
-    
-    String result = "Mode: " + mode + " ";
-    
+    String result =  ephemeris->getAlmanacSummary();
+
     // Check if we're before start time or calculate remaining time
     if (configManager->isBeforeStartTime()) {
         int remainingMins = configManager->getMinutesUntilStart();

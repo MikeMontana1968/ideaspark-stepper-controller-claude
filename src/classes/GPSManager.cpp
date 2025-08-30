@@ -168,3 +168,44 @@ unsigned long GPSManager::getUnixTimestamp() {
     
     return timestamp;
 }
+
+int GPSManager::getTimezoneOffset() {
+    float longitude = getLongitude();
+    
+    // Basic timezone calculation: longitude / 15 degrees per hour
+    // Round to nearest hour
+    int timezoneOffset = round(longitude / 15.0);
+    
+    // Add 1 hour for Daylight Saving Time if applicable
+    if (isDST()) {
+        timezoneOffset += 1;
+    }
+    
+    // Clamp to reasonable timezone range (-12 to +14)
+    if (timezoneOffset < -12) timezoneOffset = -12;
+    if (timezoneOffset > 14) timezoneOffset = 14;
+    
+    return timezoneOffset;
+}
+
+bool GPSManager::isDST() {
+    int month = getMonth();
+    int day = getDay();
+    
+    // Simple DST rules for US (2nd Sunday in March to 1st Sunday in November)
+    // This is a simplified version - just use months for basic detection
+    
+    if (month >= 4 && month <= 10) {
+        // April through October - definitely DST
+        return true;
+    } else if (month == 3) {
+        // March - DST starts 2nd Sunday (roughly day 8-14)
+        return day >= 8;
+    } else if (month == 11) {
+        // November - DST ends 1st Sunday (roughly day 1-7) 
+        return day <= 7;
+    }
+    
+    // December, January, February - no DST
+    return false;
+}

@@ -26,6 +26,8 @@ public:
     int getSecond();
     
     unsigned long getUnixTimestamp();
+    int getTimezoneOffset();
+    bool isDST();
 
 private:
     TinyGPSPlus gps;
