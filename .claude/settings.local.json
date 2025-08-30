@@ -15,7 +15,8 @@
       "Read(C:\\Users\\mikem\\OneDrive\\Documents\\PlatformIO\\Projects\\Test-BT-Client/**)",
       "Read(C:\\Users\\mikem\\OneDrive\\Documents\\PlatformIO\\Projects\\Test-BT-Client/**)",
       "Bash(git rm:*)",
-      "Bash(pio pkg search:*)"
+      "Bash(pio pkg search:*)",
+      "Bash(git remote get-url:*)"
     ],
     "deny": [],
     "ask": []
