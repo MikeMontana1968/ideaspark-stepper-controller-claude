@@ -38,7 +38,7 @@ The system uses a component-based architecture with dedicated manager classes:
 - **BluetoothManager**: Provides user configuration interface via Bluetooth Serial Profile
 - **ConfigurationManager**: Handles JSON-based configuration persistence in SPIFFS at `/schedule.json`
 - **LogManager**: SPIFFS-based logging system with automatic rotation (1MB files, max 50 files, numbered from 1000)
-- **EphemerisCalculator**: Calculates moon setting compass headings using ephemeris library
+- **Ephemeris**: Calculates moon setting compass headings using SolarCalculator and MoonRise libraries
 
 ### Data Flow
 
@@ -73,6 +73,28 @@ Settings stored as JSON in `/schedule.json`:
 - Log entry interval: 1 minute
 - GPS timeout: 10 minutes
 - Log file rotation: 1MB per file
+
+## Dependencies
+
+Key libraries managed by PlatformIO:
+- **mikalhart/TinyGPSPlus@^1.0.3** - GPS data parsing
+- **adafruit/Adafruit GFX Library@^1.11.9** - Graphics primitives
+- **adafruit/Adafruit SSD1306@^2.5.10** - OLED display driver
+- **waspinator/AccelStepper@^1.64** - Stepper motor control
+- **bblanchon/ArduinoJson@^7.4.2** - JSON configuration handling
+- **paulstoffregen/Time@^1.6.1** - Time management utilities
+- **jpb10/SolarCalculator@^2.0.2** - Solar position calculations
+- **signetica/MoonRise@^2.0.4** - Moon position calculations
+- **plerup/EspSoftwareSerial@^8.2.0** - Software serial for GPS
+
+## GPIO Pin Assignments
+
+**Current wiring (with conflicts):**
+- GPS: GPIO16 (RX), GPIO17 (TX)
+- Stepper: GPIO18, GPIO19, GPIO21, GPIO22
+- I2C OLED: GPIO21 (SDA), GPIO22 (SCL)
+
+**Note**: GPIO21/22 have conflicts between I2C and stepper. See `docs/wiring-pin-out.md` for recommended revision using GPIO12, GPIO14, GPIO26, GPIO27 for stepper control.
 
 ## Testing and Validation
 
